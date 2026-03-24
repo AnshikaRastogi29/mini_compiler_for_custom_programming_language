@@ -1,0 +1,19 @@
+integer a === 5;
+integer b === 10;
+integer i === 0;
+
+if "a < b" {
+    print "a is smaller";
+} else {
+    print "b is smaller";
+}
+
+while "a < 10" {
+    a === 10;
+    print a;
+}
+
+for "i < 3" {
+    print i;
+    i === 3;
+}
