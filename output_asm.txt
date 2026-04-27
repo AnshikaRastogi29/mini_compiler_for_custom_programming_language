@@ -1,0 +1,41 @@
+mov a, 5
+mov b, 10
+mov i, 0
+mov eax, a
+cmp a, b
+setl al
+movzx eax, al
+mov t0, eax
+cmp t0, 0
+je L1
+jmp L0
+L0:
+print "a is smaller"
+jmp L2
+L1:
+print "b is smaller"
+L2:
+L3:
+mov eax, a
+cmp a, 10
+setl al
+movzx eax, al
+mov t1, eax
+cmp t1, 0
+je L4
+mov a, 10
+print "a"
+jmp L3
+L4:
+L5:
+mov eax, i
+cmp i, 3
+setl al
+movzx eax, al
+mov t2, eax
+cmp t2, 0
+je L6
+print "i"
+mov i, 3
+jmp L5
+L6:
