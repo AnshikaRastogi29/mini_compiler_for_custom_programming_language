@@ -1,3 +1,4 @@
+#include "assemblycode_generator.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -14,10 +15,13 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
     }
 
     std::string line;
+
     while (std::getline(in, line)) {
         std::istringstream iss(line);
         std::string word;
         iss >> word;
+
+        if (word.empty()) continue;
 
         // Label
         if (word.back() == ':') {
@@ -27,8 +31,9 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
 
         // ifFalse t0 goto L1
         if (word == "ifFalse") {
-            std::string condVar, _goto, label;
-            iss >> condVar >> _goto >> label;
+            std::string condVar, gotoWord, label;
+            iss >> condVar >> gotoWord >> label;
+
             out << "cmp " << condVar << ", 0\n";
             out << "je " << label << "\n";
             continue;
@@ -38,6 +43,7 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
         if (word == "goto") {
             std::string label;
             iss >> label;
+
             out << "jmp " << label << "\n";
             continue;
         }
@@ -46,37 +52,31 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
         if (word == "print") {
             std::string toPrint;
             std::getline(iss, toPrint);
-            // Remove leading whitespace
-            toPrint.erase(0, toPrint.find_first_not_of(" \t"));
-            if (toPrint.front() != '"' && !isdigit(toPrint.front())) {
-                toPrint = "\"" + toPrint + "\"";  // quote string if not already
+
+            // remove leading spaces
+            if (!toPrint.empty()) {
+                toPrint.erase(0, toPrint.find_first_not_of(" \t"));
             }
+
             out << "print " << toPrint << "\n";
             continue;
         }
 
-
-        // t1 = a + b
+        // Assignment / Binary operation
         std::string lhs = word;
         std::string equal, arg1, op, arg2;
+
         iss >> equal >> arg1;
 
+        // Simple assignment
         if (!(iss >> op)) {
-            // Simple assignment: t1 = a
-            // Check if arg1 is a literal string (non-numeric, non-variable)
-            if (!isdigit(arg1[0]) && !isalpha(arg1[0])) {
-                arg1 = "\"" + arg1 + "\"";
-            } else if (!isdigit(arg1[0]) && isalpha(arg1[0]) && arg1 != "true" && arg1 != "false") {
-                // Treat as string constant
-                arg1 = "\"" + arg1 + "\"";
-            }
             out << "mov " << lhs << ", " << arg1 << "\n";
-
             continue;
         }
 
-        // Binary operation: t1 = a + b
+        // Binary operation
         iss >> arg2;
+
         out << "mov eax, " << arg1 << "\n";
 
         if (op == "+")
@@ -85,8 +85,10 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
             out << "sub eax, " << arg2 << "\n";
         else if (op == "*")
             out << "imul eax, " << arg2 << "\n";
-        else if (op == "/")
-            out << "mov edx, 0\nidiv " << arg2 << "\n";  // Simple div without considering signed values
+        else if (op == "/") {
+            out << "mov edx, 0\n";
+            out << "idiv " << arg2 << "\n";
+        }
         else if (op == "<")
             out << "cmp " << arg1 << ", " << arg2 << "\nsetl al\nmovzx eax, al\n";
         else if (op == ">")
@@ -105,10 +107,6 @@ void generateAssembly(const std::string& inputFile, const std::string& outputFil
 
     in.close();
     out.close();
-    std::cout << "Assembly code written to " << outputFile << "\n";
-}
 
-int main() {
-    generateAssembly("output_3ac.txt", "output_asm.txt");
-    return 0;
+    std::cout << "\nAssembly code written to " << outputFile << std::endl;
 }
